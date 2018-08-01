@@ -95,7 +95,9 @@ var App = React.createClass({
               'Content-Type': 'application/json'
             }
         }).then((res) => {
-            this.setState({users: res.json()});
+            return res.json();
+        }).then((users) => {
+            this.setState({users: users});
         });
     },
 
