@@ -8,8 +8,8 @@ class RedisPersistService():
     PROJECT_NAME = 'eoi'
 
     def __init__(self):
-        self.client = redis.from_url(
-            os.environ.get('REDIS_URL'),
+        self.client = redis.StrictRedis(
+            host='database',
             decode_responses=True)
 
     def create(self, resource, data):
@@ -30,17 +30,31 @@ class RedisPersistService():
     def delete(self, resource, resource_id):
         self.client.hdel(self.get_resource_key(resource, resource_id))
 
-    def get_list(self, resource):
-        item_list = []
-        item_keys = self.client.keys(
+    def get_list(self, resource, query_filter=None):
+        resource_list = []
+        resource_keys = self.client.keys(
             self.get_resource_key(resource, '*'))
 
-        for key in item_keys:
-            item_data = self.client.hgetall(key)
-            item_data['id'] = key
-            item_list.append(item_data)
+        for key in resource_keys:
+            resource_data = self.client.hgetall(key)
+            resource_data['id'] = key
 
-        return item_list
+            if self.matches_filter(resource_data, query_filter):
+                resource_list.append(resource_data)
+
+        return resource_list
+
+    def matches_filter(self, resource_data, query_filter):
+        matches = True
+
+        if not query_filter:
+            return matches
+
+        for key, query in query_filter.items():
+            if resource_data[key] != query:
+                return False
+
+        return matches
 
     def get_resource_key(self, resource, resource_id):
         return '{}:{}:{}'.format(self.PROJECT_NAME, resource, resource_id)

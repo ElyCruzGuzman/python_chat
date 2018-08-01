@@ -1,6 +1,6 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 
-from .persist import RedisPersistService
+from persist import RedisPersistService
 
 app = Flask(__name__)
 persist_client = RedisPersistService()
@@ -17,7 +17,7 @@ persist_client = RedisPersistService()
 
 @app.route("/")
 def index():
-    return "Hola Mundo!"
+    return render_template('index.html')
 
 
 @app.route("/api/v1/users", methods=['GET'])
