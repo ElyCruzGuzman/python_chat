@@ -39,9 +39,8 @@ var ChatList = React.createClass({
         };
     },
 
-    onClickUser: function(username) {
-        console.log(username);
-        this.props.onClickCurrentUser(username);
+    onClickUser: function(user) {
+        this.props.onClickCurrentUser(user);
     },
 
     render: function() {
@@ -53,7 +52,7 @@ var ChatList = React.createClass({
                             <li className="list-group-item"
                                 key={index}>
                                 <a href="#user"
-                                   onClick={ () => this.onClickUser(item.username) }
+                                   onClick={ () => this.onClickUser(item) }
                                     >{item.username}</a>
                             </li>
                         )}
@@ -75,7 +74,7 @@ var ChatDetail = React.createClass({
         return (
             <div className="card">
                 <div className="card-body">
-                    <h2>{this.props.you}</h2>
+                    <h2>{this.props.you.username}</h2>
                     <ul className="list-group">
                         <li className="list-group-item chat-you"></li>
                         {this.props.messages.map((item, index) =>
@@ -95,12 +94,12 @@ var App = React.createClass({
         return {
             users: [],
             current_messages: [],
-            current_user: null
+            current_user: { username: ''}
         };
     },
 
-    handleChangeUserOnApp: function(username) {
-        this.setState({current_user: username});
+    handleChangeUserOnApp: function(user) {
+        this.setState({current_user: user});
     },
 
     handleUserCreation: function(user) {
