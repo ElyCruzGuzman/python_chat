@@ -39,22 +39,53 @@ var ChatList = React.createClass({
         };
     },
 
+    onClickUser: function(username) {
+        console.log(username);
+        this.props.onClickCurrentUser(username);
+    },
+
     render: function() {
         return (
-            <div>
-                <ul>
-                    {this.props.users.map((item, index) =>
-                        <li key={index}>{item.username}</li>
-                    )}
-                </ul>
+            <div className="card">
+                <div className="card-body">
+                    <ul className="list-group">
+                        {this.props.users.map((item, index) =>
+                            <li className="list-group-item"
+                                key={index}>
+                                <a href="#user"
+                                   onClick={ () => this.onClickUser(item.username) }
+                                    >{item.username}</a>
+                            </li>
+                        )}
+                    </ul>
+                </div>
             </div>
         );
     }
 });
 
 var ChatDetail = React.createClass({
+    getDefaultProps: function() {
+        return {
+            messages: []
+        };
+    },
+
     render: function() {
-        return (<div>DETAIL {this.props.user}</div>);
+        return (
+            <div className="card">
+                <div className="card-body">
+                    <h2>{this.props.you}</h2>
+                    <ul className="list-group">
+                        <li className="list-group-item chat-you"></li>
+                        {this.props.messages.map((item, index) =>
+                            <li className="list-group-item"
+                                key={index}>{item.text}</li>
+                        )}
+                    </ul>
+                </div>
+            </div>
+        );
     }
 });
 
@@ -63,7 +94,7 @@ var App = React.createClass({
     getInitialState: function() {
         return {
             users: [],
-            messages: [],
+            current_messages: [],
             current_user: null
         };
     },
@@ -82,8 +113,10 @@ var App = React.createClass({
               'Content-Type': 'application/json'
             }
         }).then((res) => {
+            return res.json();
+        }).then((user) => {
             let users = this.state.users;
-            users.push(res.json());
+            users.push(user);
             this.setState({users: users});
         });
     },
@@ -101,6 +134,19 @@ var App = React.createClass({
         });
     },
 
+    handleClickCurrentUser(user) {
+        // TODO Fetch messages for this user
+        this.setState({
+            current_user: user,
+            messages: []
+        });
+    },
+
+    sendMessage: function() {
+        // TODO Post message
+        // TODO Set state messages
+    },
+
     render: function() {
         return (
             <div className="container">
@@ -112,10 +158,21 @@ var App = React.createClass({
 
                 <div className="row">
                     <div className="col-md-5">
-                        <ChatList users={this.state.users} />
+                        <ChatList
+                            users={this.state.users}
+                            onClickCurrentUser={this.handleClickCurrentUser}
+                        />
                     </div>
                     <div className="col-md-7">
-                        <ChatDetail user={this.state.current_user} />
+                        <ChatDetail you={this.state.current_user}
+                            messages={this.state.current_messages}
+                        />
+
+                        <input type="text"
+                            onKeyUp={(e) => this.setState({current_message: e.target.value})}
+                        />
+                        <input type="button" value="Send"
+                            onClick={() => this.sendMessage()} />
                     </div>
                 </div>
             </div>
