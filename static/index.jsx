@@ -1,5 +1,8 @@
 /*** @jsx React.DOM */
 
+const USER_AUTHENTICATED_ID = 'a109daad-38da-4847-b4da-26a104e9453e';
+
+
 var Header = React.createClass({
     handleUserChange: function(e) {
         this.props.onChangeUserKeyUp(e.target.value);
@@ -10,7 +13,6 @@ var Header = React.createClass({
             email: this.state.email,
             username: this.state.username
         };
-        console.log(user);
         this.props.onCreateUser(user);
     },
 
@@ -71,15 +73,15 @@ var ChatDetail = React.createClass({
     },
 
     render: function() {
+
         return (
             <div className="card">
                 <div className="card-body">
                     <h2>{this.props.you.username}</h2>
                     <ul className="list-group">
-                        <li className="list-group-item chat-you"></li>
                         {this.props.messages.map((item, index) =>
-                            <li className="list-group-item"
-                                key={index}>{item.text}</li>
+                            <li className="list-group-item chat-you"
+                                key={index}>{item}</li>
                         )}
                     </ul>
                 </div>
@@ -103,8 +105,6 @@ var App = React.createClass({
     },
 
     handleUserCreation: function(user) {
-        // TODO POST a la api
-        // TODO set state users
         fetch('/api/v1/users', {
             method: 'POST',
             body: JSON.stringify(user),
@@ -134,16 +134,43 @@ var App = React.createClass({
     },
 
     handleClickCurrentUser(user) {
-        // TODO Fetch messages for this user
-        this.setState({
-            current_user: user,
-            messages: []
+        const message_id = [USER_AUTHENTICATED_ID, user.id];
+        fetch('/api/v1/messages/' + message_id, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+        }).then((res) => {
+            return res.json();
+        }).then((messages) => {
+            this.setState({
+                current_user: user,
+                current_messages: messages
+            });
         });
     },
 
     sendMessage: function() {
         // TODO Post message
-        // TODO Set state messages
+        let message = {
+            text: this.state.current_message,
+            sender: USER_AUTHENTICATED_ID,
+            receiver: this.state.current_user.id,
+        }
+
+        fetch('/api/v1/messages', {
+            method: 'POST',
+            body: JSON.stringify(message),
+            headers: {
+              'Content-Type': 'application/json'
+            }
+        }).then((response) => {
+            message = response.json();
+            this.setState({
+                current_messages: this.state.current_messages.concat(
+                    this.state.current_message)
+            });
+        });
     },
 
     render: function() {
@@ -171,6 +198,7 @@ var App = React.createClass({
                             onKeyUp={(e) => this.setState({current_message: e.target.value})}
                         />
                         <input type="button" value="Send"
+                            className="btn btn-primary"
                             onClick={() => this.sendMessage()} />
                     </div>
                 </div>

@@ -14,9 +14,19 @@ class RedisPersistService():
 
     def create(self, resource, data):
         resource_id = self.generate_id()
+
         self.client.hmset(
             self.get_resource_key(resource, resource_id),
             data)
+
+    def create_list(self, resource, data, resource_id):
+        self.client.lpush(
+            self.get_resource_key(resource, resource_id), data)
+        return data
+
+    def get_resource_as_list(self, resource, resource_id):
+        return self.client.lrange(
+            self.get_resource_key(resource, resource_id), 0, 100000)
 
     def update(self, resource, data, resource_id):
         index = self.get_resource_key(resource, resource_id)
@@ -37,7 +47,7 @@ class RedisPersistService():
 
         for key in resource_keys:
             resource_data = self.client.hgetall(key)
-            resource_data['id'] = key
+            resource_data['id'] = key.split(':')[-1]
 
             if self.matches_filter(resource_data, query_filter):
                 resource_list.append(resource_data)

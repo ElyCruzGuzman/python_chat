@@ -60,14 +60,17 @@ def list_messages():
 
 @app.route("/api/v1/messages/<message_id>", methods=['GET'])
 def get_message(message_id):
-    message = persist_client.get('messages', message_id)
+    # TODO Need better naming since it's returning a conversation
+    message = persist_client.get_resource_as_list('messages', message_id)
     return jsonify(message)
 
 
 @app.route("/api/v1/messages", methods=['POST'])
 def create_message():
     message_data = request.get_json()
-    message = persist_client.create('messages', message_data)
+    message_id = '_'.join([message_data['sender'], message_data['receiver']])
+    message = persist_client.create_list(
+        'messages', message_data['text'], message_id)
     return jsonify(message)
 
 
@@ -80,11 +83,5 @@ def update_message(message_id):
 
 @app.route("/api/v1/messages/<message_id>", methods=['DELETE'])
 def delete_message(message_id):
-    persist_client.delete('messages', user_id)
+    persist_client.delete('messages', message_id)
     return jsonify(), 204
-
-
-
-
-
-
