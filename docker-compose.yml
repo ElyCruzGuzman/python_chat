@@ -3,6 +3,8 @@ version: '3'
 services:
   database:
     image: redis
+    volumes:
+      - ./data:/data
 
   web:
     build: .

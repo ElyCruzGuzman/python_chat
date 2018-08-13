@@ -1,7 +1,5 @@
 /*** @jsx React.DOM */
 
-const USER_AUTHENTICATED_ID = 'a109daad-38da-4847-b4da-26a104e9453e';
-
 
 var Header = React.createClass({
     handleUserChange: function(e) {
@@ -14,6 +12,10 @@ var Header = React.createClass({
             username: this.state.username
         };
         this.props.onCreateUser(user);
+    },
+
+    authenticateUser: function() {
+        this.props.onAuthenticateUser(this.state.authenticated_user);
     },
 
     render: function() {
@@ -30,6 +32,12 @@ var Header = React.createClass({
 
                 <input type="button" value="Create user"
                     onClick={() => this.handleCreateUser()}/>
+
+                <input type="text"
+                    onKeyUp={(e) => this.setState({authenticated_user: e.target.value})} />
+
+                <input type="button" value="Authenticate"
+                    onClick={() => this.authenticateUser()}/>
             </div>);
     }
 });
@@ -55,7 +63,7 @@ var ChatList = React.createClass({
                                 key={index}>
                                 <a href="#user"
                                    onClick={ () => this.onClickUser(item) }
-                                    >{item.username}</a>
+                                    >{item.username} - {item.id}</a>
                             </li>
                         )}
                     </ul>
@@ -95,13 +103,18 @@ var App = React.createClass({
     getInitialState: function() {
         return {
             users: [],
+            users_filtered: [],
             current_messages: [],
-            current_user: { username: ''}
+            current_user: { username: ''},
+            authenticated_user: null
         };
     },
 
-    handleChangeUserOnApp: function(user) {
-        this.setState({current_user: user});
+    handleChangeUserOnApp: function(query) {
+        const users = this.state.users.filter((item) => {
+            return item.username.includes(query);
+        })
+        this.setState({users_filtered: users});
     },
 
     handleUserCreation: function(user) {
@@ -113,10 +126,12 @@ var App = React.createClass({
             }
         }).then((res) => {
             return res.json();
-        }).then((user) => {
-            let users = this.state.users;
-            users.push(user);
-            this.setState({users: users});
+        }).then((user_data) => {
+            this.setState(
+                {
+                    users: this.state.users.concat(user),
+                    users_filtered: this.state.users.concat(user)
+                });
         });
     },
 
@@ -129,12 +144,12 @@ var App = React.createClass({
         }).then((res) => {
             return res.json();
         }).then((users) => {
-            this.setState({users: users});
+            this.setState({users: users, users_filtered: users});
         });
     },
 
     handleClickCurrentUser(user) {
-        const message_id = [USER_AUTHENTICATED_ID, user.id];
+        const message_id = [this.state.authenticated_user.id, user.id].join('_');
         fetch('/api/v1/messages/' + message_id, {
             method: 'GET',
             headers: {
@@ -151,10 +166,9 @@ var App = React.createClass({
     },
 
     sendMessage: function() {
-        // TODO Post message
         let message = {
             text: this.state.current_message,
-            sender: USER_AUTHENTICATED_ID,
+            sender: this.state.authenticated_user.id,
             receiver: this.state.current_user.id,
         }
 
@@ -173,19 +187,32 @@ var App = React.createClass({
         });
     },
 
+    handleUserAuthentication: function(user_id) {
+        fetch('/api/v1/users/' + user_id, {
+            headers: {
+              'Content-Type': 'application/json'
+            }
+        }).then((response) => {
+            return response.json();
+        }).then((user) => {
+            this.setState({authenticated_user: user})
+        });
+    },
+
     render: function() {
         return (
             <div className="container">
                 <div className="row">
                     <Header onChangeUserKeyUp={this.handleChangeUserOnApp}
                         onCreateUser={this.handleUserCreation}
+                        onAuthenticateUser={this.handleUserAuthentication}
                     />
                 </div>
 
                 <div className="row">
                     <div className="col-md-5">
                         <ChatList
-                            users={this.state.users}
+                            users={this.state.users_filtered}
                             onClickCurrentUser={this.handleClickCurrentUser}
                         />
                     </div>

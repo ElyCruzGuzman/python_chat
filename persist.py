@@ -35,7 +35,9 @@ class RedisPersistService():
 
     def get(self, resource, resource_id):
         index = self.get_resource_key(resource, resource_id)
-        return self.client.hgetall(index)
+        resource_data = self.client.hgetall(index)
+        resource_data['id'] = resource_id
+        return resource_data
 
     def delete(self, resource, resource_id):
         self.client.hdel(self.get_resource_key(resource, resource_id))
